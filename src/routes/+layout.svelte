@@ -10,6 +10,7 @@
   let menuOpen = $state(false);
   let scrolled = $state(false);
   let mounted = $state(false);
+  let theme = $state<'dark' | 'light'>('dark');
 
   const navLinks = [
     { href: '#about', label: 'About' },
@@ -20,6 +21,10 @@
 
   onMount(() => {
     mounted = true;
+    const savedTheme = localStorage.getItem('portfolio-theme');
+    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+    theme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : prefersLight ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
     const moveCursor = (e: MouseEvent) => {
       cursorX = e.clientX; cursorY = e.clientY;
       ringX = e.clientX; ringY = e.clientY;
@@ -43,6 +48,12 @@
       observer.disconnect();
     };
   });
+
+  function toggleTheme() {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('portfolio-theme', theme);
+  }
 </script>
 
 <svelte:head>
@@ -70,6 +81,11 @@
       {#each navLinks as link, i}
         <li><a href={link.href} class="nav-link"><span class="nav-num">0{i+1}.</span>{link.label}</a></li>
       {/each}
+      <li>
+        <button class="theme-toggle" type="button" onclick={toggleTheme} aria-label="Switch to {theme === 'dark' ? 'light' : 'dark'} theme">
+          {theme === 'dark' ? 'Light' : 'Dark'}
+        </button>
+      </li>
       <li><a href="#contact" class="btn-primary">Hire Me</a></li>
     </ul>
     <button class="hamburger" class:open={menuOpen} onclick={() => menuOpen = !menuOpen}
@@ -83,6 +99,7 @@
         {#each navLinks as link}
           <li><a href={link.href} class="mobile-link" onclick={() => menuOpen = false}>{link.label}</a></li>
         {/each}
+        <li><button class="theme-toggle mobile-theme" type="button" onclick={toggleTheme}>{theme === 'dark' ? 'Light theme' : 'Dark theme'}</button></li>
         <li><a href="#contact" class="btn-primary" onclick={() => menuOpen = false}>Hire Me</a></li>
       </ul>
     </div>
@@ -110,6 +127,9 @@
   .nav-link { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-secondary); text-decoration: none; transition: color 0.2s; display: flex; align-items: center; gap: 5px; }
   .nav-link:hover { color: var(--neon-cyan); }
   .nav-num { color: var(--neon-cyan); font-size: 0.7rem; }
+  .theme-toggle { padding: 8px 12px; border: 1px solid var(--border); border-radius: 4px; background: rgba(255,255,255,0.03); color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; transition: all 0.2s; }
+  .theme-toggle:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+  .mobile-theme { width: max-content; }
   .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; padding: 4px; }
   .hamburger span { display: block; width: 24px; height: 2px; background: var(--text-primary); transition: all 0.3s; transform-origin: center; }
   .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }

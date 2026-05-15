@@ -1,0 +1,25 @@
+Ayo-Oluwole Oluwasomidotun John
+Fullstack Developer
+Lagos, Nigeria
+
+Email: damilarejohns07@gmail.com
+GitHub: https://github.com/somidotun
+LinkedIn: https://www.linkedin.com/in/ayo-oluwole-oluwasomidotun-51a94522a/
+
+Summary
+Fullstack developer focused on fast, accessible, and polished web applications. Experienced across frontend engineering, API integration, realtime interfaces, and product-focused UI implementation.
+
+Core Skills
+- Frontend: SvelteKit, React, Next.js, Vue.js, TypeScript, Tailwind CSS, GSAP, Canvas
+- Backend: Node.js, Express, FastAPI, REST APIs
+- Data and Cloud: PostgreSQL, MongoDB, Redis, MySQL, Firebase
+- Practices: Git, CI/CD, testing, responsive design, accessibility, performance optimization
+
+Selected Projects
+- Cinematic Portfolio: SvelteKit portfolio with particle animation, project filtering, persistent theming, responsive layout, and accessible case-study modals.
+- DevPulse Analytics: Realtime developer productivity dashboard with GitHub integration, sprint tracking, and live team metrics.
+- NexaCommerce: E-commerce platform concept with inventory management, recommendation surfaces, and checkout UX.
+- AgriTrack: Agriculture management platform concept for sensor alerts, weather planning, and market price analytics.
+
+Availability
+Open to full-time roles, freelance projects, and collaborations.

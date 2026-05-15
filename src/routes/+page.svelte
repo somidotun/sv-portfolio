@@ -6,16 +6,6 @@
   const roles = ['Fullstack Developer', 'React Engineer', 'Node.js Architect', 'UI/UX Enthusiast', 'Problem Solver'];
   let roleIdx = 0;
 
-  // --- CHATBOT ---
-  type Message = { role: 'user' | 'assistant'; content: string };
-  let chatOpen = $state(false);
-  let chatInput = $state('');
-  let chatMessages = $state<Message[]>([
-    { role: 'assistant', content: "Hi! I'm AOJ's AI assistant. Ask me anything about his skills, projects, or experience! 🚀" }
-  ]);
-  let chatLoading = $state(false);
-  let chatContainer: HTMLElement;
-
   // --- CONTACT FORM ---
   let formName = $state('');
   let formEmail = $state('');
@@ -24,56 +14,106 @@
   let formError = $state('');
 
   // --- PROJECTS ---
-  const projects = [
+  type Project = {
+    title: string;
+    category: 'Web App' | 'Dashboard' | 'Mobile' | 'Platform';
+    desc: string;
+    tech: string[];
+    color: string;
+    icon: string;
+    live: string;
+    github: string;
+    impact: string;
+    role: string;
+    preview: string[];
+  };
+
+  const projects: Project[] = [
     {
       title: 'NexaCommerce',
+      category: 'Platform',
       desc: 'A high-performance e-commerce platform with real-time inventory management, AI-powered recommendations, and seamless payment integration.',
       tech: ['React', 'Node.js', 'PostgreSQL', 'Redis', 'Stripe'],
       color: '#00f5ff',
-      icon: '🛒',
-      live: '#', github: '#'
+      icon: 'NC',
+      live: 'https://github.com/somidotun',
+      github: 'https://github.com/somidotun',
+      impact: 'Designed a conversion-focused storefront flow with cached catalog reads and resilient checkout states.',
+      role: 'Frontend architecture, API contracts, dashboard UX, performance tuning',
+      preview: ['Inventory sync', 'Checkout flow', 'Recommendations']
     },
     {
       title: 'DevPulse Analytics',
+      category: 'Dashboard',
       desc: 'Real-time developer productivity dashboard with GitHub integration, sprint tracking, and intelligent bottleneck detection powered by ML.',
       tech: ['SvelteKit', 'Python', 'FastAPI', 'MongoDB', 'WebSocket'],
       color: '#7c3aed',
-      icon: '📊',
-      live: '#', github: '#'
+      icon: 'DP',
+      live: 'https://github.com/somidotun',
+      github: 'https://github.com/somidotun',
+      impact: 'Built streaming metrics views that help teams spot review delays and sprint risk early.',
+      role: 'SvelteKit UI, live charting, state modeling, API integration',
+      preview: ['Sprint health', 'Review latency', 'Throughput']
     },
     {
       title: 'CloudNest',
+      category: 'Web App',
       desc: 'Collaborative cloud workspace with live document editing, team permissions, version history, and end-to-end encryption.',
       tech: ['Next.js', 'TypeScript', 'AWS', 'Socket.io', 'Prisma'],
       color: '#00ff88',
-      icon: '☁️',
-      live: '#', github: '#'
+      icon: 'CN',
+      live: 'https://github.com/somidotun',
+      github: 'https://github.com/somidotun',
+      impact: 'Created a collaborative editing surface with permission-aware navigation and conflict-friendly save states.',
+      role: 'Product UI, realtime collaboration, access control flows',
+      preview: ['Document room', 'Permissions', 'Version history']
     },
     {
       title: 'SwiftChat',
+      category: 'Mobile',
       desc: 'End-to-end encrypted messaging app with voice/video calls, file sharing, disappearing messages, and custom bots API.',
       tech: ['React Native', 'Go', 'WebRTC', 'Firebase', 'Docker'],
       color: '#ff006e',
-      icon: '💬',
-      live: '#', github: '#'
+      icon: 'SC',
+      live: 'https://github.com/somidotun',
+      github: 'https://github.com/somidotun',
+      impact: 'Shaped a touch-first messaging experience with clear call states, delivery feedback, and encrypted media flows.',
+      role: 'Mobile UX, WebRTC states, message lifecycle, deployment packaging',
+      preview: ['Chat thread', 'Call room', 'Media vault']
     },
     {
-      title: 'Portfolio AI',
-      desc: 'This very portfolio — built with SvelteKit, featuring an AI chatbot powered by Claude, particle animations, and cinematic transitions.',
-      tech: ['SvelteKit', 'TypeScript', 'Claude AI', 'GSAP', 'CSS'],
+      title: 'Cinematic Portfolio',
+      category: 'Web App',
+      desc: 'This portfolio experience, built with SvelteKit, particle animation, project filtering, theme persistence, and cinematic case-study transitions.',
+      tech: ['SvelteKit', 'TypeScript', 'Canvas', 'CSS', 'Accessibility'],
       color: '#ff9500',
-      icon: '✨',
-      live: '#', github: '#'
+      icon: 'AO',
+      live: 'https://github.com/somidotun',
+      github: 'https://github.com/somidotun',
+      impact: 'Turned a static portfolio into an interactive product showcase with motion, reduced-motion support, and keyboard-friendly controls.',
+      role: 'Interaction design, Svelte state, responsive UI, accessibility pass',
+      preview: ['Hero system', 'Case studies', 'Theme engine']
     },
     {
       title: 'AgriTrack',
+      category: 'Platform',
       desc: 'Smart agriculture management platform for Nigerian farmers with IoT sensor integration, weather predictions, and market price analytics.',
       tech: ['Vue.js', 'Django', 'PostgreSQL', 'MQTT', 'TensorFlow'],
       color: '#00f5ff',
-      icon: '🌱',
-      live: '#', github: '#'
+      icon: 'AT',
+      live: 'https://github.com/somidotun',
+      github: 'https://github.com/somidotun',
+      impact: 'Designed farmer-friendly operational screens for sensor alerts, weather planning, and market price comparisons.',
+      role: 'UX flows, dashboard composition, backend integration, data visualization',
+      preview: ['Sensor alerts', 'Weather plan', 'Market prices']
     }
   ];
+  const projectFilters = ['All', 'Web App', 'Dashboard', 'Mobile', 'Platform'] as const;
+  let activeFilter = $state<(typeof projectFilters)[number]>('All');
+  let selectedProject = $state<Project | null>(null);
+  let filteredProjects = $derived(
+    activeFilter === 'All' ? projects : projects.filter((project) => project.category === activeFilter)
+  );
 
   // --- SKILLS ---
   const skillGroups = [
@@ -171,47 +211,25 @@
     window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
   }
 
-  async function sendChat() {
-    const msg = chatInput.trim();
-    if (!msg || chatLoading) return;
-    chatInput = '';
-    chatMessages = [...chatMessages, { role: 'user', content: msg }];
-    chatLoading = true;
-
-    setTimeout(() => {
-      if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
-    }, 50);
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg, history: chatMessages.slice(-10) })
-      });
-      const data = await res.json();
-      chatMessages = [...chatMessages, { role: 'assistant', content: data.reply || "I couldn't get a response. Please try again!" }];
-    } catch {
-      chatMessages = [...chatMessages, { role: 'assistant', content: "Oops! Connection error. Try again in a moment." }];
-    }
-    chatLoading = false;
-    setTimeout(() => { if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight; }, 50);
-  }
-
-  function handleChatKey(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
-  }
-
   function handleContact(e: SubmitEvent) {
     e.preventDefault();
     if (!formName || !formEmail || !formMsg) { formError = 'Please fill in all fields.'; return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formEmail)) { formError = 'Enter a valid email address.'; return; }
     formError = '';
+    const subject = encodeURIComponent(`Portfolio inquiry from ${formName}`);
+    const body = encodeURIComponent(`${formMsg}\n\nFrom: ${formName}\nEmail: ${formEmail}`);
+    window.location.href = `mailto:damilarejohns07@gmail.com?subject=${subject}&body=${body}`;
     formSent = true;
-    // In production: integrate with EmailJS or a backend endpoint
   }
 
   function resetForm() { formName = ''; formEmail = ''; formMsg = ''; formSent = false; }
+
+  function closeModalFromBackdrop(e: MouseEvent) {
+    if (e.target === e.currentTarget) selectedProject = null;
+  }
 </script>
+
+<svelte:window onkeydown={(e) => e.key === 'Escape' && (selectedProject = null)} />
 
 <!-- HERO -->
 <section id="hero" class="hero">
@@ -244,6 +262,7 @@
     <div class="hero-actions reveal" style="animation-delay: 0.5s">
       <a href="#projects" class="btn-primary">View My Work →</a>
       <a href="#contact" class="btn-secondary">Get In Touch</a>
+      <a href="/resume.txt" class="btn-secondary" download>Download Resume</a>
     </div>
 
     <div class="hero-socials reveal" style="animation-delay: 0.6s">
@@ -338,11 +357,34 @@
     <h2 class="section-title reveal">Projects that <span class="neon-text">ship</span></h2>
     <p class="section-sub reveal">A selection of products I've built — from idea to production.</p>
 
+    <div class="project-filters reveal" aria-label="Project filters">
+      {#each projectFilters as filter}
+        <button
+          class:active={activeFilter === filter}
+          class="filter-btn"
+          type="button"
+          onclick={() => activeFilter = filter}
+          aria-pressed={activeFilter === filter}
+        >
+          {filter}
+        </button>
+      {/each}
+    </div>
+
     <div class="projects-grid">
-      {#each projects as project, i}
+      {#each filteredProjects as project, i}
         <article class="project-card glass-card reveal" style="animation-delay: {i * 0.1}s; --card-color: {project.color}">
+          <figure class="project-preview" aria-label="{project.title} interface preview">
+            <div class="preview-topbar"><span></span><span></span><span></span></div>
+            <div class="preview-body">
+              {#each project.preview as item, previewIndex}
+                <span style="--preview-index: {previewIndex}">{item}</span>
+              {/each}
+            </div>
+          </figure>
           <div class="project-header">
             <span class="project-icon">{project.icon}</span>
+            <span class="project-category">{project.category}</span>
             <div class="project-links">
               <a href={project.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub" class="project-link-icon">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
@@ -359,12 +401,59 @@
               <span class="tech-tag">{tech}</span>
             {/each}
           </div>
+          <button type="button" class="case-study-btn" onclick={() => selectedProject = project}>
+            Open case study
+          </button>
           <div class="project-glow" aria-hidden="true"></div>
         </article>
       {/each}
     </div>
   </div>
 </section>
+
+{#if selectedProject}
+  <div class="modal-backdrop" role="presentation" onclick={closeModalFromBackdrop}>
+    <div
+      class="case-modal glass-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="case-title"
+      style="--card-color: {selectedProject.color}"
+    >
+      <button class="modal-close" type="button" onclick={() => selectedProject = null} aria-label="Close case study">x</button>
+      <div class="modal-preview project-preview" aria-label="{selectedProject.title} expanded interface preview">
+        <div class="preview-topbar"><span></span><span></span><span></span></div>
+        <div class="preview-body">
+          {#each selectedProject.preview as item, previewIndex}
+            <span style="--preview-index: {previewIndex}">{item}</span>
+          {/each}
+        </div>
+      </div>
+      <p class="project-category">{selectedProject.category}</p>
+      <h3 id="case-title">{selectedProject.title}</h3>
+      <p>{selectedProject.desc}</p>
+      <div class="case-grid">
+        <div>
+          <span class="case-label">Impact</span>
+          <p>{selectedProject.impact}</p>
+        </div>
+        <div>
+          <span class="case-label">Role</span>
+          <p>{selectedProject.role}</p>
+        </div>
+      </div>
+      <div class="project-tech">
+        {#each selectedProject.tech as tech}
+          <span class="tech-tag">{tech}</span>
+        {/each}
+      </div>
+      <div class="modal-actions">
+        <a href={selectedProject.live} class="btn-primary" target="_blank" rel="noopener noreferrer">Live Demo</a>
+        <a href={selectedProject.github} class="btn-secondary" target="_blank" rel="noopener noreferrer">GitHub Repo</a>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <!-- SKILLS -->
 <section id="skills" class="section">
@@ -461,68 +550,6 @@
     </div>
   </div>
 </section>
-
-<!-- AI CHATBOT -->
-<div class="chatbot-fab" aria-label="Open AI assistant">
-  <button class="fab-btn" onclick={() => chatOpen = !chatOpen} aria-expanded={chatOpen} aria-label="Toggle AI Portfolio Assistant">
-    {#if chatOpen}
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    {:else}
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10-1.72 0-3.34-.44-4.76-1.21L2 22l1.21-5.24A9.96 9.96 0 0 1 2 12 10 10 0 0 1 12 2zm0 2a8 8 0 0 0-8 8c0 1.72.54 3.31 1.46 4.62L4.5 19.5l2.88-.96A8 8 0 1 0 12 4z"/><circle cx="8.5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="15.5" cy="12" r="1.5"/></svg>
-    {/if}
-    {#if !chatOpen}<span class="fab-pulse"></span>{/if}
-  </button>
-</div>
-
-{#if chatOpen}
-  <div class="chatbot-panel glass-card" role="dialog" aria-label="AI Portfolio Assistant">
-    <div class="chat-header">
-      <div class="chat-avatar">
-        <span>AI</span>
-        <span class="chat-status-dot"></span>
-      </div>
-      <div>
-        <p class="chat-title">AOJ's Assistant</p>
-        <p class="chat-subtitle">Powered by Claude · Online</p>
-      </div>
-      <button class="chat-close" onclick={() => chatOpen = false} aria-label="Close chat">✕</button>
-    </div>
-
-    <div class="chat-messages" bind:this={chatContainer} role="log" aria-live="polite">
-      {#each chatMessages as msg}
-        <div class="chat-bubble {msg.role}">
-          <p>{msg.content}</p>
-        </div>
-      {/each}
-      {#if chatLoading}
-        <div class="chat-bubble assistant">
-          <div class="typing-dots"><span></span><span></span><span></span></div>
-        </div>
-      {/if}
-    </div>
-
-    <div class="chat-quick-btns">
-      <button class="quick-btn" onclick={() => { chatInput = 'What projects has he built?'; sendChat(); }}>Projects</button>
-      <button class="quick-btn" onclick={() => { chatInput = 'What are his skills?'; sendChat(); }}>Skills</button>
-      <button class="quick-btn" onclick={() => { chatInput = 'Is he available for hire?'; sendChat(); }}>Availability</button>
-    </div>
-
-    <div class="chat-input-area">
-      <input
-        type="text"
-        class="chat-input"
-        placeholder="Ask me anything..."
-        bind:value={chatInput}
-        onkeydown={handleChatKey}
-        aria-label="Chat message input"
-        disabled={chatLoading}
-      />
-      <button class="chat-send" onclick={sendChat} disabled={chatLoading || !chatInput.trim()} aria-label="Send message">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      </button>
-    </div>
-  </div>
-{/if}
 
 <style>
   /* HERO */
@@ -835,6 +862,7 @@
     border-radius: 50%;
     border: 2px solid transparent;
     background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple)) border-box;
+    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
     -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -882,6 +910,39 @@
   }
 
   /* PROJECTS */
+  .project-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 32px 0 28px;
+  }
+
+  .filter-btn,
+  .case-study-btn,
+  .modal-close {
+    font-family: var(--font-mono);
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+    color: var(--text-secondary);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .filter-btn {
+    padding: 8px 14px;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .filter-btn.active,
+  .filter-btn:hover {
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+    background: rgba(0, 245, 255, 0.08);
+    box-shadow: 0 0 16px rgba(0, 245, 255, 0.12);
+  }
+
   .projects-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -889,7 +950,7 @@
   }
 
   .project-card {
-    padding: 28px;
+    padding: 18px;
     position: relative;
     overflow: hidden;
     transition: all 0.3s ease;
@@ -917,10 +978,34 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 18px;
   }
 
-  .project-icon { font-size: 1.8rem; }
+  .project-icon {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid color-mix(in srgb, var(--card-color) 45%, transparent);
+    border-radius: 8px;
+    color: var(--card-color);
+    font-family: var(--font-display);
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    background: color-mix(in srgb, var(--card-color) 10%, transparent);
+  }
+
+  .project-category {
+    margin-right: auto;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--card-color);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
 
   .project-links { display: flex; gap: 12px; }
 
@@ -937,7 +1022,7 @@
     font-family: var(--font-display);
     font-size: 1.1rem;
     font-weight: 700;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     color: var(--text-primary);
     letter-spacing: 0.02em;
   }
@@ -960,6 +1045,137 @@
     border-radius: 3px;
     color: var(--text-muted);
     letter-spacing: 0.05em;
+  }
+
+  .project-preview {
+    margin: 0 0 18px;
+    border: 1px solid color-mix(in srgb, var(--card-color) 28%, transparent);
+    border-radius: 8px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--card-color) 22%, transparent), transparent 32%),
+      linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+  }
+
+  .preview-topbar {
+    display: flex;
+    gap: 5px;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.22);
+  }
+
+  .preview-topbar span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--card-color);
+    opacity: 0.75;
+  }
+
+  .preview-body {
+    min-height: 120px;
+    padding: 18px;
+    display: grid;
+    gap: 10px;
+    align-content: center;
+  }
+
+  .preview-body span {
+    display: block;
+    width: calc(78% - (var(--preview-index) * 9%));
+    min-width: 46%;
+    padding: 9px 12px;
+    border-radius: 5px;
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--card-color) 15%, rgba(255,255,255,0.04));
+    border: 1px solid color-mix(in srgb, var(--card-color) 22%, transparent);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+  }
+
+  .case-study-btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 10px 14px;
+    color: var(--text-primary);
+  }
+
+  .case-study-btn:hover {
+    color: var(--bg);
+    background: var(--card-color);
+    border-color: var(--card-color);
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(2,4,8,0.78);
+    backdrop-filter: blur(14px);
+  }
+
+  .case-modal {
+    width: min(760px, 100%);
+    max-height: min(760px, calc(100vh - 48px));
+    overflow-y: auto;
+    padding: 28px;
+    position: relative;
+    animation: panel-in 0.24s ease-out;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    color: var(--text-primary);
+  }
+
+  .modal-preview { margin-bottom: 22px; }
+
+  .case-modal h3 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 4vw, 2.4rem);
+    margin: 8px 0 12px;
+  }
+
+  .case-modal p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .case-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin: 24px 0;
+  }
+
+  .case-label {
+    display: block;
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--card-color);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  @keyframes panel-in {
+    from { opacity: 0; transform: scale(0.96) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
   }
 
   /* SKILLS */
@@ -1100,238 +1316,6 @@
   .form-success h3 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 8px; color: var(--neon-green); }
   .form-success p { color: var(--text-secondary); margin-bottom: 24px; font-size: 0.9rem; }
 
-  /* CHATBOT FAB */
-  .chatbot-fab {
-    position: fixed;
-    bottom: 32px;
-    right: 32px;
-    z-index: 200;
-  }
-
-  .fab-btn {
-    width: 58px; height: 58px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
-    border: none;
-    color: var(--bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--glow-cyan), 0 8px 32px rgba(0,0,0,0.4);
-    transition: all 0.2s;
-    position: relative;
-  }
-
-  .fab-btn:hover { transform: scale(1.08); }
-
-  .fab-pulse {
-    position: absolute;
-    inset: -4px;
-    border-radius: 50%;
-    border: 2px solid var(--neon-cyan);
-    opacity: 0;
-    animation: fab-ping 2s ease-out infinite;
-  }
-
-  @keyframes fab-ping {
-    0% { transform: scale(0.95); opacity: 0.6; }
-    100% { transform: scale(1.4); opacity: 0; }
-  }
-
-  /* CHATBOT PANEL */
-  .chatbot-panel {
-    position: fixed;
-    bottom: 104px;
-    right: 32px;
-    width: 360px;
-    max-height: 520px;
-    display: flex;
-    flex-direction: column;
-    z-index: 199;
-    border: 1px solid var(--border-bright);
-    box-shadow: var(--glow-cyan), 0 24px 48px rgba(0,0,0,0.6);
-    animation: panel-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  @keyframes panel-in {
-    from { opacity: 0; transform: scale(0.9) translateY(20px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  .chat-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 18px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-
-  .chat-avatar {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: var(--bg);
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  .chat-status-dot {
-    position: absolute;
-    bottom: 0; right: 0;
-    width: 9px; height: 9px;
-    background: var(--neon-green);
-    border-radius: 50%;
-    border: 2px solid var(--bg-glass);
-    box-shadow: 0 0 6px var(--neon-green);
-  }
-
-  .chat-title {
-    font-family: var(--font-display);
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    color: var(--text-primary);
-  }
-
-  .chat-subtitle {
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    color: var(--neon-green);
-    letter-spacing: 0.05em;
-  }
-
-  .chat-close {
-    margin-left: auto;
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    transition: color 0.2s;
-    padding: 4px;
-    border-radius: 4px;
-  }
-
-  .chat-close:hover { color: var(--text-primary); }
-
-  .chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-  }
-
-  .chat-bubble {
-    max-width: 85%;
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    line-height: 1.5;
-  }
-
-  .chat-bubble.user {
-    background: linear-gradient(135deg, rgba(0,245,255,0.15), rgba(0,102,255,0.1));
-    border: 1px solid rgba(0,245,255,0.2);
-    align-self: flex-end;
-    border-radius: 12px 12px 2px 12px;
-    color: var(--text-primary);
-  }
-
-  .chat-bubble.assistant {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    align-self: flex-start;
-    border-radius: 12px 12px 12px 2px;
-    color: var(--text-secondary);
-  }
-
-  .typing-dots { display: flex; gap: 5px; align-items: center; padding: 2px 0; }
-  .typing-dots span {
-    width: 6px; height: 6px;
-    background: var(--text-muted);
-    border-radius: 50%;
-    animation: typing 1.2s ease-in-out infinite;
-  }
-  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes typing { 0%, 100% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(1.2); opacity: 1; } }
-
-  .chat-quick-btns {
-    display: flex;
-    gap: 6px;
-    padding: 8px 16px;
-    border-top: 1px solid var(--border);
-    flex-wrap: wrap;
-  }
-
-  .quick-btn {
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    padding: 4px 10px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-muted);
-    border-radius: 12px;
-    transition: all 0.2s;
-    letter-spacing: 0.04em;
-  }
-
-  .quick-btn:hover {
-    border-color: var(--neon-cyan);
-    color: var(--neon-cyan);
-    background: rgba(0,245,255,0.05);
-  }
-
-  .chat-input-area {
-    display: flex;
-    gap: 8px;
-    padding: 12px 16px;
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-
-  .chat-input {
-    flex: 1;
-    background: rgba(5,20,40,0.6);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 9px 12px;
-    color: var(--text-primary);
-    font-size: 0.85rem;
-    font-family: var(--font-body);
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .chat-input:focus { border-color: var(--neon-cyan); }
-  .chat-input::placeholder { color: var(--text-muted); font-size: 0.8rem; }
-
-  .chat-send {
-    width: 38px; height: 38px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
-    border: none;
-    color: var(--bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    flex-shrink: 0;
-  }
-
-  .chat-send:disabled { opacity: 0.4; }
-  .chat-send:not(:disabled):hover { transform: scale(1.05); box-shadow: var(--glow-cyan); }
-
   /* RESPONSIVE */
   @media (max-width: 1024px) {
     .projects-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1347,8 +1331,8 @@
     .projects-grid { grid-template-columns: 1fr; }
     .skills-grid { grid-template-columns: 1fr; }
     .contact-grid { grid-template-columns: 1fr; gap: 40px; }
-    .chatbot-panel { width: calc(100vw - 40px); right: 20px; bottom: 90px; }
-    .chatbot-fab { right: 20px; bottom: 20px; }
     .about-image-wrap { order: -1; }
+    .case-grid { grid-template-columns: 1fr; }
+    .modal-actions { flex-direction: column; }
   }
 </style>
